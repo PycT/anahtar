@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <title>
+            boncuklar
+        </title>
+        <link rel="stylesheet" href="anahtar.css">
+    </head>
+    <body>
+        <div class="main">
+            <h1>
+                NGINX: pass user's ip-address when proxying a request
+            </h1>
+            Say we have a web application, utilizing backend-for-frontend (BFF) solution, like Next.js. We may have some reason to collect (with user’s concent) users’ ip-addresses - to implement some kind of subscription model or for security reasons or whatever.
+
+The thing is, that client's request is received by bff, which relays it to backend to engage backend logic and generate some statics upon the result and then return that back to client. What happens here is that the backend receives an ip-address of the server running th BFF, not the client’s one.
+
+The solution is to use X-Real-IP header proxying the reqest.
+
+Snippet for BFF Nginx config:
+
+server {
+	...
+	location /api/
+	{
+		proxy_pass https://my.domain/api/;
+		proxy_set_header X-Real-IP $remote_addr;
+		break;
+	}
+}
+Snippet for backend Nginx config:
+
+server {
+	...
+	set_real_ip from xxx.xxx.xxx.xxx; # bff server's ip
+	real_ip_header X-Real-IP;
+	...
+}
+And that's it.<br><br>
+        <a href="https://willpraxis.substack.com/p/nginx-pass-users-ip-address-when?s=w">https://willpraxis.substack.com/p/nginx-pass-users-ip-address-when?s=w</a>
+        <br><br>
+        <h1>
+            Anahtar
+        </h1>
+        <div id="anahtar">
+        </div> 
+        <br>
+
+        </div>
+    </body>
+    <script src="js/anahtar.js"></script>
+</html>

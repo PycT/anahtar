@@ -1,0 +1,86 @@
+@font-face {
+    font-family: "UbuntuMono";
+    src: url("/fonts/UbuntuMono-R.ttf") format "ttf";
+}
+
+:root {
+    --mainColour: #5ee9a8;
+    --subtleColour: #1d2621;
+    --mainBackgroundColour: #0d1611;
+    --linksColour: #3dc887;
+}
+
+body {
+    font-family: "Ubuntu";
+    font-size:1.2em;
+    background-color: var(--mainBackgroundColour);
+    color: var(--mainColour);
+}
+
+a {
+    color: var(--linksColour);
+    font-style: italic;
+}
+
+:visited {
+    color: var(--linksColour);
+    font-style: italic;
+}
+
+.main {
+    width: 1060px;
+    margin: auto;
+}
+
+.blinker {
+    animation: blinker 1.2s linear infinite;
+}
+
+@keyframes blinker {
+    0% {
+        background-color: var(--mainBackgroundColour);
+    }
+
+    50% {
+        background-color: var(--mainColour);
+    }
+
+    100% {
+        background-color: var(--mainBackgroundColour);
+    }
+}
+
+.textInput {
+    border: 1px solid var(--mainColour);
+    display: inline-block;
+    padding: 8px;
+    width: 80ch;
+    line-height: 1.1em;
+    min-height: 5.5em;
+}
+
+.unfocused {
+    opacity: 50%;
+}
+
+
+.textSelection {
+    background-color: var(--mainColour);
+    color: var(--mainBackgroundColour);
+}
+
+
+.anahtarToolBox {
+    padding: 8px;
+}
+
+
+.anahtarTool {
+    border: 1px solid var(--mainColour);
+    border-radius: 8px;
+    min-height: 16px;
+    min-width: 16px;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 8px;
+}
