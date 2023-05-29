@@ -795,11 +795,7 @@ class Anahtar {
                 "Pause": () => {},
                 "Alt": () => {},
                 "Control": () => {},
-                "Shift": () => {
-                    this.content.isShiftDown = true;
-                    this.content.selectionStart = this.content.ePointer;
-                    this.content.selectionEnd = this.content.ePointer;
-                },
+                "Shift": () => {},
                 "CapsLock": () => {},
                 "Tab": () => {
                     let i = 0;
@@ -826,7 +822,20 @@ class Anahtar {
                 "Shift",
                 "CapsLock"
             ];
-        
+            
+            console.log(evt.key);
+            console.log(evt.shiftKey);
+
+            if (evt.shiftKey) {
+                if (!this.content.isShiftDown) {
+                    this.content.selectionStart = this.content.ePointer;
+                    this.content.selectionEnd = this.content.ePointer;
+                }
+                this.content.isShiftDown = true;
+            } else {
+                this.content.isShiftDown = false;
+            }
+
             if (this.isFocused) {
                 evt.preventDefault();
 
@@ -850,21 +859,6 @@ class Anahtar {
                 this.update();
 
             }
-        });
-
-
-        document.addEventListener("keyup", (evt) => {
-            const actions = {
-                "Shift": () => {this.content.isShiftDown = false;},
-            };
-
-            if (this.isFocused) {
-                evt.preventDefault();
-
-                if (evt.key in actions) {
-                    actions[evt.key]();
-                }
-            }   
         });
 
         
@@ -926,7 +920,6 @@ class Anahtar {
 }
 
 
-// let anahtar = new Anahtar(document.getElementById("anahtar"), "For <a href=\"#pew\">example</a> a 12<br />3456 &gtbm &zhopa &gt; &<b>l</b>&lt;<b id=\"zhop\" class=\"k1\">text</b> here <br /> pew pew-pew!");
 let anahtar = new Anahtar(document.getElementById("anahtar"), "1<br />1234567890<br />1234567890<br />123456789012345<br />1234567890<br />1234567890<br />123456789012345");
 console.log(anahtar.content);
 
