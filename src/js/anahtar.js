@@ -85,6 +85,7 @@ class AnahString { // an array of AnahChar elements (instances)
         this.deleteCharBeforeCursor = this.deleteCharBeforeCursor.bind(this);
         this.deleteCharOnCursor = this.deleteCharOnCursor.bind(this);
         this.typeChar = this.typeChar.bind(this);
+        this.pastText = this.pasteText.bind(this);
     }
 
     isLineBreak(anahtarEntity) {
@@ -148,6 +149,11 @@ class AnahString { // an array of AnahChar elements (instances)
                 }
             }
             this.ePointer--;
+        } else {
+            if (this.onBrink == 1) {
+                this.deleteChar(this.ePointer);
+                this.onBrink = 0;
+            }
         }
     }
 
@@ -183,9 +189,6 @@ class AnahString { // an array of AnahChar elements (instances)
         let charCode = a_char.charCodeAt(0);
         if (charCode in htmlEntitiesCodes) {
             typedChar = htmlEntitiesCodes[charCode];
-            console.log("a_char: " + a_char);
-            console.log("typedChar: " + typedChar);
-            console.log("charCode: " + charCode);
         }
 
         if (this.ePointer == this.eString.length) {
@@ -436,6 +439,33 @@ class AnahString { // an array of AnahChar elements (instances)
             this.ePointer = i;
         }
 
+    }
+
+    pasteText(theText) {
+        let width = 0;
+        let currentPos = 0;
+
+        if (this.ePointer == this.eString.length) {
+            currentPos = this.ePointer - 1;
+        } else {
+            currentPos = this.ePointer;
+        }
+        
+        for (
+            let checkPosition = currentPos; 
+            (checkPosition > 0) && (!this.isLineBreak(this.eString[checkPosition]));
+            checkPosition--) {
+                width++;
+        }
+
+        for (let i = 0; i < theText.length; i++) {
+            if (width >= inputFieldWidth) {
+                width = 0;
+                this.insertNewLine();
+            }
+            this.typeChar(theText[i]);
+            width++;
+        }
     }
 
 
@@ -733,6 +763,7 @@ class Anahtar {
 
         this.draw = this.draw.bind(this);
         this.update = this.update.bind(this);
+        this.pasteFromClipboard = this.pasteFromClipboard.bind(this);
 
         this.draw(container);
         this.update();
@@ -763,6 +794,7 @@ class Anahtar {
             }
         }
 
+
         document.addEventListener("click", (evt) => {
             let identifier = evt.target.id;
         
@@ -778,6 +810,8 @@ class Anahtar {
         
         
         document.addEventListener("keydown", (evt) => {
+            let theKeyDown = evt.key;
+
             const actions = {
                 "ArrowLeft": this.content.moveLeft,
                 "ArrowRight": this.content.moveRight,
@@ -802,6 +836,14 @@ class Anahtar {
                     for (i = 0; i < tabToSpaces; i++) {
                         this.content.typeChar("&nbsp;");
                     }
+                },
+                "Copy": () => { console.log("Copy") },
+                "Cut": () => { console.log("Cut") },
+                "Paste": this.pasteFromClipboard,
+                "SelectAll": () => {
+                    this.content.selectionStart = 0;
+                    this.content.selectionEnd = this.content.eString.length;
+                    this.content.ePointer = this.content.eString.length;
                 }
             };
 
@@ -820,42 +862,58 @@ class Anahtar {
                 "Alt",
                 "Control",
                 "Shift",
-                "CapsLock"
+                "CapsLock",
+                "Copy"
             ];
             
-            console.log(evt.key);
-            console.log(evt.shiftKey);
-
-            if (evt.shiftKey) {
-                if (!this.content.isShiftDown) {
-                    this.content.selectionStart = this.content.ePointer;
-                    this.content.selectionEnd = this.content.ePointer;
-                }
-                this.content.isShiftDown = true;
-            } else {
-                this.content.isShiftDown = false;
-            }
+            // console.log(evt.key);
+            // console.log(theKeyDown);
+            // console.log(evt.ctrlKey);
 
             if (this.isFocused) {
                 evt.preventDefault();
 
-                if ((this.content.selectionStart != this.content.selectionEnd) && !(nonTextAffectingKeys.includes(evt.key))) {
+                if (evt.shiftKey) {
+                    if (!this.content.isShiftDown) {
+                        this.content.selectionStart = this.content.ePointer;
+                        this.content.selectionEnd = this.content.ePointer;
+                    }
+                    this.content.isShiftDown = true;
+                } else {
+                    this.content.isShiftDown = false;
+                }
+
+                if (evt.ctrlKey) {
+                    const controlActions = {
+                        "A": "SelectAll",
+                        "C": "Copy",
+                        "X": "Cut",
+                        "V": "Paste"
+                    };
+
+                    const keyCheck = theKeyDown.toUpperCase();
+
+                    if (keyCheck in controlActions)
+                    theKeyDown = controlActions[keyCheck];
+                }
+    
+                if ((this.content.selectionStart != this.content.selectionEnd) && !(nonTextAffectingKeys.includes(theKeyDown))) {
                     this.content.ePointer = this.content.selectionEnd;
                     while (this.content.ePointer > this.content.selectionStart) {
                         this.content.deleteCharBeforeCursor();
                     }
                 }
 
-                if (evt.key in actions) {
+                if (theKeyDown in actions) {
                     
-                    actions[evt.key]();
-                    updateSelection();
+                    actions[theKeyDown]();
+                    if (theKeyDown != "SelectAll") updateSelection();
 
                 } else {
-                    this.content.typeChar(evt.key);
+                    this.content.typeChar(theKeyDown);
                 }
 
-                dropSelection();
+                if (theKeyDown != "SelectAll") dropSelection();
                 this.update();
 
             }
@@ -897,7 +955,24 @@ class Anahtar {
         
     }
     
+    pasteFromClipboard() {
+        const clipboardFail = (msg = "Can't access the clipboard") => {
+            alert(msg);
+        }
 
+        const readClipboard = new Promise((resolve, reject) => {
+            if (!navigator.clipboard.readText) {
+                reject("Reading from clipboard is unavailable on this site.");
+            } else {
+                return navigator.clipboard.readText().then((txt) => {
+                    this.content.pasteText(txt);
+                    this.update();
+                }, clipboardFail);
+            }
+        });
+
+        readClipboard.catch(clipboardFail);
+    }
     
     draw(container) {
         container.appendChild(this.toolBox.toolBox);
